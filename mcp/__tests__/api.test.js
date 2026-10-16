@@ -48,6 +48,16 @@ describe('api client', { concurrency: 1 }, () => {
     assert.equal(data.total, 1);
     assert.equal(data.skills[0].name, 'test-skill');
     assert.ok(calls[0].url.includes('/search?q=web%20scraping&limit=5'));
+    assert.equal(calls[0].opts.headers['X-Client-Source'], 'mcp');
+    assert.equal(calls[0].opts.headers.Authorization, undefined);
+  });
+
+  it('sends the configured key as a bearer token', async () => {
+    setMockResponse('/search', { skills: [], total: 0 });
+    api.setApiKey('fs-key-test');
+    await api.searchSkills('test');
+    assert.equal(calls[0].opts.headers.Authorization, 'Bearer fs-key-test');
+    api.setApiKey(null);
   });
 
   it('listSkills builds query params correctly', async () => {
@@ -98,5 +108,36 @@ describe('api client', { concurrency: 1 }, () => {
   it('throws on non-ok response', async () => {
     // No mock set, so 404
     await assert.rejects(() => api.searchSkills('test'), /FindSkills API error: 404/);
+  });
+
+  it('includes API-provided guidance and sign-in URL for 401 responses', async () => {
+    globalThis.fetch = async () => ({
+      status: 401,
+      ok: false,
+      statusText: 'Unauthorized',
+      json: async () => ({ message: 'Authentication required', signin_url: 'https://findskills.org/signin' }),
+    });
+    await assert.rejects(
+      () => api.searchSkills('test'),
+      /Authentication required\n\n  → https:\/\/findskills\.org\/signin/,
+    );
+  });
+
+  it('uses the fallback message for a 401 with no message or invalid JSON', async () => {
+    globalThis.fetch = async () => ({
+      status: 401,
+      ok: false,
+      statusText: 'Unauthorized',
+      json: async () => ({}),
+    });
+    await assert.rejects(() => api.searchSkills('test'), /Authentication required \(HTTP 401\)/);
+
+    globalThis.fetch = async () => ({
+      status: 401,
+      ok: false,
+      statusText: 'Unauthorized',
+      json: async () => { throw new SyntaxError('invalid JSON'); },
+    });
+    await assert.rejects(() => api.searchSkills('test'), /Authentication required \(HTTP 401\)/);
   });
 });

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BIN = join(__dirname, '..', 'bin.js');
@@ -35,7 +37,9 @@ function sendRequest(proc, method, params = {}) {
 }
 
 async function startMcpServer() {
-  const proc = spawn('node', [BIN], { stdio: ['pipe', 'pipe', 'pipe'] });
+  const home = mkdtempSync(join(tmpdir(), 'findskills-server-test-'));
+  const proc = spawn('node', [BIN], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, HOME: home, USERPROFILE: home } });
+  proc.once('exit', () => rmSync(home, { recursive: true, force: true }));
   const initRes = await sendRequest(proc, 'initialize', {
     protocolVersion: '2025-03-26',
     capabilities: {},

@@ -1,10 +1,29 @@
 # findskills-mcp
 
-MCP Server for [FindSkills](https://findskills.org) — search and discover 15,000+ AI Agent Skills via the [Model Context Protocol](https://modelcontextprotocol.io).
+MCP Server for [FindSkills](https://findskills.org) — search and discover 93,000+ AI Agent Skills via the [Model Context Protocol](https://modelcontextprotocol.io).
 
 ## Quick Start
 
-### Claude Desktop
+### One-command setup (recommended)
+
+```bash
+npx -y findskills-mcp init
+```
+
+This installs globally, detects your Node path, and writes the config for Claude Code or Claude Desktop automatically. Works with nvm, fnm, volta, and system Node.
+
+### Manual setup
+
+<details>
+<summary>Claude Code</summary>
+
+```bash
+claude mcp add findskills -- npx -y findskills-mcp
+```
+</details>
+
+<details>
+<summary>Claude Desktop</summary>
 
 Add to `claude_desktop_config.json`:
 
@@ -18,20 +37,17 @@ Add to `claude_desktop_config.json`:
   }
 }
 ```
+</details>
 
-### Claude Code
-
-```bash
-claude mcp add findskills -- npx -y findskills-mcp
-```
-
-### Other MCP Clients
+<details>
+<summary>Other MCP Clients</summary>
 
 ```bash
 npx findskills-mcp
 ```
 
 The server communicates over stdio using the MCP protocol.
+</details>
 
 ## Tools
 
@@ -78,6 +94,22 @@ No parameters.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `limit` | number | no | Max tags (default 50) |
+
+## Troubleshooting
+
+**Claude Code can't find `npx` (nvm/fnm/volta users)**
+
+Node version managers don't inject PATH into non-interactive processes like Claude Code. Run the one-command setup instead:
+
+```bash
+npx -y findskills-mcp init
+```
+
+Or manually use the full path:
+
+```bash
+claude mcp add findskills -- $(which npx) -y findskills-mcp
+```
 
 ## Requirements
 
